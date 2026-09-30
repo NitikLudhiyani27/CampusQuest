@@ -10,14 +10,30 @@ const BOUNDS = [
 ];
 
 const POLYGON = [
-  [77.337074, 28.544953],
-  [77.331617, 28.540516],
+  [77.336901, 28.545001],
+  [77.333156, 28.541775],
+  [77.332348, 28.542487],
+  [77.330849, 28.541231],
   [77.329625, 28.542417],
-  [77.331684, 28.544218],
-  [77.329371, 28.546544],
-  [77.330041, 28.547081],
-  [77.330545, 28.546594],
-  [77.332955, 28.548606],
+  [77.331679, 28.544176],
+  [77.332055, 28.543797],
+  [77.332824, 28.544463],
+  [77.331930, 28.545343],
+  [77.331787, 28.545502],
+  [77.332577, 28.546223],
+  [77.332010, 28.546805],
+  [77.333505, 28.548107],
+];
+
+const EXCLUDED_POLYGON = [
+  [77.333676, 28.545193],
+  [77.333370, 28.545493],
+  [77.333552, 28.545661],
+  [77.332871, 28.546318],
+  [77.333425, 28.546777],
+  [77.334200, 28.546082],
+  [77.333836, 28.545764],
+  [77.334087, 28.545513],
 ];
 
 async function copyText(text) {
@@ -70,23 +86,38 @@ export default function AmityMap() {
           },
         ],
       },
+
       bounds: [
         [77.329371, 28.540516],
         [77.337074, 28.548606],
       ],
+
       fitBoundsOptions: {
         padding: 60,
+        bearing: 15,
       },
       minZoom: 14,
-      maxZoom: 19,
-      maxBounds: BOUNDS,
+      maxZoom: 17,
     });
 
-    map.on("error", (e) => {
-      console.error("Map error:", e.error || e);
-      setStatus(
-        `Map error: ${(e.error && e.error.message) || "see console"}`
-      );
+    map.on("load", () => {
+      setStatus("Map loaded");
+
+      // Fly into the specific marked area
+      map.flyTo({
+        center: [77.3331, 28.5445],
+        zoom: 16,
+        bearing: 45,
+
+        speed: 1.5,
+        curve: 1,
+
+        easing(t) {
+          return t;
+        },
+
+        essential: true,
+      });
     });
 
     const NS = "http://www.w3.org/2000/svg";
@@ -109,22 +140,31 @@ export default function AmityMap() {
     shade.setAttribute("fill-rule", "evenodd");
 
     svg.appendChild(shade);
-
     const poly = document.createElementNS(NS, "polygon");
     poly.setAttribute("fill", "none");
     poly.setAttribute("stroke", "#ffffff");
-    poly.setAttribute("stroke-width", "5");
+    poly.setAttribute("stroke-width", "2");
     poly.setAttribute("stroke-linejoin", "round");
-
     svg.appendChild(poly);
 
-    map.getCanvasContainer().appendChild(svg);
+    const excludedPoly = document.createElementNS(NS, "polygon");
+    excludedPoly.setAttribute("fill", "none");
+    excludedPoly.setAttribute("stroke", "#ffffff50");
+    excludedPoly.setAttribute("stroke-width", "2");
+    excludedPoly.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(excludedPoly);
 
+    map.getCanvasContainer().appendChild(svg);
     const drawPolygon = () => {
       const pts = POLYGON.map((p) => map.project(p));
       const list = pts.map((p) => `${p.x},${p.y}`);
 
       poly.setAttribute("points", list.join(" "));
+
+      const excludedPts = EXCLUDED_POLYGON.map((p) => map.project(p));
+      const excludedList = excludedPts.map((p) => `${p.x},${p.y}`);
+
+      excludedPoly.setAttribute("points", excludedList.join(" "));
 
       const {
         clientWidth: w,
@@ -135,9 +175,17 @@ export default function AmityMap() {
 
       shade.setAttribute(
         "d",
-        `M${-pad},${-pad} H${w + pad} V${h + pad} H${-pad} Z M${list.join(
-          " L"
-        )} Z`
+        `
+      M${-pad},${-pad}
+      H${w + pad}
+      V${h + pad}
+      H${-pad}
+      Z
+
+      M${list.join(" L")} Z
+
+      M${excludedList.join(" L")} Z
+    `
       );
     };
 

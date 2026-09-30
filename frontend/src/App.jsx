@@ -3,6 +3,9 @@ import LoginScreen from "./components/screens/LoginScreen.jsx";
 import FactionScreen from "./components/screens/FractionScreen.jsx";
 import DesktopGate from "./components/utils/DesktopGate.jsx";
 import AmityMap from "./components/map/AmityMap.jsx";
+import { AuthProvider } from "./components/auth/AuthContext.jsx";
+import RequireAuth from "./components/auth/RequireAuth.jsx";
+import ProfileScreen from "./components/screens/ProfileScreen.jsx";
 import "./index.css";
 
 export default function App() {
@@ -14,15 +17,18 @@ export default function App() {
       </div>
 
       <div className="md:hidden">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<LoginScreen />} />
-            <Route path="/faction" element={<FactionScreen />} />
-            <Route path="/dashboard" element={<AmityMap />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<LoginScreen />} />
+              <Route path="/faction" element={<RequireAuth><FactionScreen /></RequireAuth>} />
+              <Route path="/profile" element={<RequireAuth><ProfileScreen /></RequireAuth>} />
+              <Route path="/dashboard" element={<RequireAuth><AmityMap /></RequireAuth>} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </div>
     </>
   );

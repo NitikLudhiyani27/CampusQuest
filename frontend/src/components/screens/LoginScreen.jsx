@@ -1,4 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { signInWithPopup, signInWithRedirect } from "firebase/auth";
+import { auth, googleProvider } from "../utils/firebase.js";
+import { useAuth } from "../auth/AuthContext.jsx";
 import { HudBox, CityBackdrop, Label } from "../auth/Hud.jsx";
 
 const stroke = { fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" };
@@ -22,9 +26,36 @@ function GoogleG() {
 
 export default function LoginScreen() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
-  // TODO: replace with real Google sign-in (e.g. Google Identity Services / Firebase).
-  const signInWithGoogle = () => navigate("/faction");
+  // Already signed in (or just returned from a redirect sign-in): go straight in.
+  useEffect(() => {
+    if (!loading && user) navigate("/faction", { replace: true });
+  }, [user, loading, navigate]);
+
+  const signInWithGoogle = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // Navigation happens in the effect above once auth state updates.
+    } catch (err) {
+      if (err.code === "auth/popup-blocked") {
+        // Some mobile browsers block popups; fall back to a full-page redirect.
+        return signInWithRedirect(auth, googleProvider);
+      }
+      if (err.code !== "auth/popup-closed-by-user" && err.code !== "auth/cancelled-popup-request") {
+        setError(
+          err.code === "auth/network-request-failed"
+            ? "Network error. Check your connection and try again."
+            : "Couldn't sign in with Google. Try again."
+        );
+      }
+      setBusy(false);
+    }
+  };
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-hidden bg-ink text-white">
@@ -60,16 +91,22 @@ export default function LoginScreen() {
 
         <button
           onClick={signInWithGoogle}
-          className="mt-9 block w-full text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white active:brightness-125"
+          disabled={busy || loading}
+          aria-busy={busy}
+          className="mt-9 block w-full text-left disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white active:brightness-125"
         >
           <HudBox border="linear-gradient(90deg,#2f7bff,#ff3b3b)" cut={16} innerClass="bg-gradient-to-r from-[#0b1a33] to-[#1a0d16]">
             <span className="flex h-14 items-center gap-4 px-5">
               <GoogleG />
-              <span className="flex-1 text-center font-display text-xs font-bold uppercase tracking-[0.22em]">Sign in with Google</span>
+              <span className="flex-1 text-center font-display text-xs font-bold uppercase tracking-[0.22em]">{busy ? "Signing in…" : "Sign in with Google"}</span>
               <svg viewBox="0 0 24 24" width="18" height="18" {...stroke} className="text-red" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
             </span>
           </HudBox>
         </button>
+
+        {error && (
+          <p role="alert" className="mt-4 text-center text-[13px] leading-5 text-red">{error}</p>
+        )}
 
         <p className="mt-6 text-center text-[13px] leading-5 text-mute">
           By continuing, you agree to the<br />

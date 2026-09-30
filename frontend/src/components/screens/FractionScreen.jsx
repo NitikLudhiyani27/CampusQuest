@@ -39,9 +39,6 @@ export default function FactionScreen() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
 
-  // TODO: save the chosen faction to the user's profile, then go to the map.
-  const confirm = () => console.log("faction", selected);
-
   return (
     <main className="flex min-h-dvh flex-col bg-ink px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] text-white">
       <header className="flex items-start justify-between px-2">
@@ -97,7 +94,7 @@ export default function FactionScreen() {
       </section>
 
       <button
-        onClick={confirm}
+        onClick={() => navigate("/profile", { state: { team: selected } })}
         disabled={!selected}
         className="mt-auto block w-full pt-6 text-left disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
       >
