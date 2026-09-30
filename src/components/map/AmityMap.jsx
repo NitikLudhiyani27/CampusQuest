@@ -286,7 +286,7 @@ export default function AmityMap() {
             </div>
           </>
         ) : (
-          <span>Click anywhere on the map to get its coordinates</span>
+          <span></span>
         )}
       </div>
     </div>
