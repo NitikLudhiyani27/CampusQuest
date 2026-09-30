@@ -66,8 +66,14 @@ export default function AmityMap() {
   useEffect(() => {
     const map = new MapLibreMap({
       container: container.current,
+
       style: {
         version: 8,
+
+        projection: {
+          type: "globe",
+        },
+
         sources: {
           satellite: {
             type: "raster",
@@ -78,6 +84,7 @@ export default function AmityMap() {
             maxzoom: 19,
           },
         },
+
         layers: [
           {
             id: "satellite",
@@ -85,39 +92,58 @@ export default function AmityMap() {
             source: "satellite",
           },
         ],
+
+        sky: {
+          "atmosphere-blend": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            0, 1,
+            5, 1,
+            7, 0,
+          ],
+        },
+
+        light: {
+          anchor: "map",
+          position: [1.5, 90, 80],
+        },
       },
 
-      bounds: [
-        [77.329371, 28.540516],
-        [77.337074, 28.548606],
-      ],
+      center: [77.3331, 28.5445],
+      zoom: 0,
 
-      fitBoundsOptions: {
-        padding: 60,
-        bearing: 15,
-      },
-      minZoom: 14,
+      minZoom: 0,
       maxZoom: 17,
     });
 
     map.on("load", () => {
       setStatus("Map loaded");
 
-      // Fly into the specific marked area
-      map.flyTo({
-        center: [77.3331, 28.5445],
-        zoom: 16,
-        bearing: 45,
+      const target = [77.3331, 28.5445];
 
-        speed: 1.5,
-        curve: 1,
-
-        easing(t) {
-          return t;
-        },
-
-        essential: true,
+      // Start as a globe
+      map.setProjection({
+        type: "globe",
       });
+
+      // Give the globe a moment to render
+      setTimeout(() => {
+        map.flyTo({
+          center: target,
+          zoom: 16,
+          bearing: 55,
+
+          speed: 5.0,
+          curve: 1.2,
+
+          easing(t) {
+            return t;
+          },
+
+          essential: true,
+        });
+      }, 400);
     });
 
     const NS = "http://www.w3.org/2000/svg";
@@ -140,11 +166,13 @@ export default function AmityMap() {
     shade.setAttribute("fill-rule", "evenodd");
 
     svg.appendChild(shade);
+
     const poly = document.createElementNS(NS, "polygon");
     poly.setAttribute("fill", "none");
     poly.setAttribute("stroke", "#ffffff");
     poly.setAttribute("stroke-width", "2");
     poly.setAttribute("stroke-linejoin", "round");
+
     svg.appendChild(poly);
 
     const excludedPoly = document.createElementNS(NS, "polygon");
@@ -152,9 +180,11 @@ export default function AmityMap() {
     excludedPoly.setAttribute("stroke", "#ffffff50");
     excludedPoly.setAttribute("stroke-width", "2");
     excludedPoly.setAttribute("stroke-linejoin", "round");
+
     svg.appendChild(excludedPoly);
 
     map.getCanvasContainer().appendChild(svg);
+
     const drawPolygon = () => {
       const pts = POLYGON.map((p) => map.project(p));
       const list = pts.map((p) => `${p.x},${p.y}`);
@@ -164,7 +194,10 @@ export default function AmityMap() {
       const excludedPts = EXCLUDED_POLYGON.map((p) => map.project(p));
       const excludedList = excludedPts.map((p) => `${p.x},${p.y}`);
 
-      excludedPoly.setAttribute("points", excludedList.join(" "));
+      excludedPoly.setAttribute(
+        "points",
+        excludedList.join(" ")
+      );
 
       const {
         clientWidth: w,
@@ -176,23 +209,22 @@ export default function AmityMap() {
       shade.setAttribute(
         "d",
         `
-      M${-pad},${-pad}
-      H${w + pad}
-      V${h + pad}
-      H${-pad}
-      Z
+          M${-pad},${-pad}
+          H${w + pad}
+          V${h + pad}
+          H${-pad}
+          Z
 
-      M${list.join(" L")} Z
+          M${list.join(" L")} Z
 
-      M${excludedList.join(" L")} Z
-    `
+          M${excludedList.join(" L")} Z
+        `
       );
     };
 
     map.on("render", drawPolygon);
-    drawPolygon();
 
-    map.on("load", () => setStatus("Map loaded"));
+    drawPolygon();
 
     map.getCanvas().style.cursor = "crosshair";
 
@@ -248,7 +280,9 @@ export default function AmityMap() {
     fontSize: 13,
     borderRadius: 6,
     border: "1px solid rgba(255,255,255,0.35)",
-    background: active ? "#2e9e5b" : "rgba(255,255,255,0.12)",
+    background: active
+      ? "#2e9e5b"
+      : "rgba(255,255,255,0.12)",
     color: "#fff",
     cursor: "pointer",
   });
@@ -320,16 +354,24 @@ export default function AmityMap() {
             >
               <button
                 style={btn(copied === "latlng")}
-                onClick={() => handleCopy("latlng", latlng)}
+                onClick={() =>
+                  handleCopy("latlng", latlng)
+                }
               >
-                {copied === "latlng" ? "Copied" : "Copy lat, lng"}
+                {copied === "latlng"
+                  ? "Copied"
+                  : "Copy lat, lng"}
               </button>
 
               <button
                 style={btn(copied === "lnglat")}
-                onClick={() => handleCopy("lnglat", lnglat)}
+                onClick={() =>
+                  handleCopy("lnglat", lnglat)
+                }
               >
-                {copied === "lnglat" ? "Copied" : "Copy [lng, lat]"}
+                {copied === "lnglat"
+                  ? "Copied"
+                  : "Copy [lng, lat]"}
               </button>
             </div>
           </>
