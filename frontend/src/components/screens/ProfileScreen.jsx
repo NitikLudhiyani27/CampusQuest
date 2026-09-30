@@ -147,14 +147,8 @@ export default function ProfileScreen({ team: teamProp }) {
       style={{ "--accent": team.accent, "--glow": team.glow, background: team.wash }}
     >
       {/* top bar */}
-      <header className="relative flex items-center justify-between px-5 pt-[max(1.25rem,env(safe-area-inset-top))]">
+      <header className="relative flex items-center justify-between px-5">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} aria-label="Back" className="text-white focus-visible:outline-2 focus-visible:outline-white">
-            <svg viewBox="0 0 24 24" width="24" height="24" {...stroke}><path d="M19 12H5m6-6-6 6 6 6" /></svg>
-          </button>
-          <span className="font-display text-xl font-black italic tracking-wide">
-            CAMPUS<span style={{ color: team.accent }}>QUEST</span>
-          </span>
         </div>
       </header>
 
@@ -241,18 +235,6 @@ export default function ProfileScreen({ team: teamProp }) {
               </svg>
             )}
           </div>
-        </Field>
-
-        {/* display name */}
-        <Field
-          icon={<><circle cx="12" cy="7" r="3.5" fill="currentColor" /><path d="M5 21c0-4.5 3-7 7-7s7 2.5 7 7Z" fill="currentColor" /></>}
-          label="Display name"
-          optional
-          hint="This is what other players will see on the leaderboard."
-          count={displayName.length}
-          max={20}
-        >
-          <input value={displayName} maxLength={20} onChange={(e) => setDisplayName(e.target.value)} placeholder="Nova" className={`${inputBase} border-white/15`} />
         </Field>
 
         {/* bio */}
