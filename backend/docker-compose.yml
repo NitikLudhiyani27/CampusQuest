@@ -1,0 +1,48 @@
+services:
+  api:
+    build: .
+    container_name: campusquest-api
+    # --legacy-watch (polling) makes hot reload work reliably on Docker Desktop (Mac/Windows).
+    command: npx nodemon --legacy-watch src/server.js
+    ports:
+      - "3000:3000"
+    # Loads FIREBASE_* (and anything else) from .env if the file exists.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: campusquest
+      DB_USER: campus
+      DB_PASSWORD: campus123
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    container_name: campusquest-postgres
+    environment:
+      POSTGRES_DB: campusquest
+      POSTGRES_USER: campus
+      POSTGRES_PASSWORD: campus123
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # On a FRESH volume Postgres runs every .sql file in this folder automatically (migrations only).
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+      # Whole db/ folder, so migrations and seeds can be run by hand: see README.
+      - ./db:/db:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campus -d campusquest"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
